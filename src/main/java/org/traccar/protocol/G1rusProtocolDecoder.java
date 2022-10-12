@@ -135,7 +135,8 @@ public class G1rusProtocolDecoder extends BaseProtocolDecoder {
         byte[] imei = new byte[8];
         buf.readBytes(imei, 0, 7);
 
-        DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, String.valueOf(Longs.fromByteArray(imei)));
+        DeviceSession deviceSession = getDeviceSession(channel, remoteAddress,
+                String.valueOf(Longs.fromByteArray(imei)));
         if (deviceSession == null) {
             return null;
         }

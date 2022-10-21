@@ -46,6 +46,13 @@ public class G1rusProtocolDecoder extends BaseProtocolDecoder {
         return buf.readCharSequence(length, StandardCharsets.US_ASCII).toString();
     }
 
+    private int getADValue(int rawValue) {
+        final int AD_MIN = -10;
+        final int AD_MAX = 100;
+
+        return rawValue * (AD_MAX - AD_MIN) / 4096 + AD_MIN;
+    }
+
     private Position decodeRegular(DeviceSession deviceSession, ByteBuf buf, int type) {
 
         Position position = new Position(getProtocolName());
@@ -103,10 +110,12 @@ public class G1rusProtocolDecoder extends BaseProtocolDecoder {
         }
 
         if (BitUtil.check(dataMask, 4)) {
+            final int ADC_DATA_MASK = 0b0000111111111111;
+
             buf.readUnsignedByte(); // length
-            position.set(Position.KEY_POWER, buf.readUnsignedShort() * 110 / 4096 - 10);
-            position.set(Position.KEY_BATTERY, buf.readUnsignedShort() * 110 / 4096 - 10);
-            position.set(Position.KEY_DEVICE_TEMP, buf.readUnsignedShort() * 110 / 4096 - 10);
+            position.set(Position.KEY_POWER, getADValue(buf.readUnsignedShort() & ADC_DATA_MASK));
+            position.set(Position.KEY_BATTERY, getADValue(buf.readUnsignedShort() & ADC_DATA_MASK));
+            position.set(Position.KEY_DEVICE_TEMP, getADValue(buf.readUnsignedShort() & ADC_DATA_MASK));
         }
 
         if (BitUtil.check(dataMask, 5)) {

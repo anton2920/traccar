@@ -50,7 +50,7 @@ public class G1rusProtocolDecoder extends BaseProtocolDecoder {
 
         Position position = new Position(getProtocolName());
         position.setDeviceId(deviceSession.getDeviceId());
-        position.setTime(new Date((buf.readUnsignedIntLE() + 946684800) * 1000L));
+        position.setTime(new Date((buf.readUnsignedInt() + 946684800) * 1000L));
 
         if (BitUtil.check(type, 6)) {
             position.set(Position.KEY_EVENT, buf.readUnsignedByte());

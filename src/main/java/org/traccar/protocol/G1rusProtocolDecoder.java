@@ -126,7 +126,14 @@ public class G1rusProtocolDecoder extends BaseProtocolDecoder {
             buf.skipBytes(buf.readUnsignedByte());
         }
 
-        return position;
+        if (BitUtil.check(dataMask, 1)) {
+            return position;
+        } else {
+            /* NOTE: if device doesn't send GPS data, rest shouldn't be reported as position.
+             * But we still parse the thing in order to get correct offset for the following
+             * data in batch (if it exists). */
+            return null;
+        }
     }
 
     @Override
@@ -161,7 +168,10 @@ public class G1rusProtocolDecoder extends BaseProtocolDecoder {
                 int length = buf.readUnsignedShort();
                 int subtype = buf.readUnsignedByte();
                 if (BitUtil.to(subtype, 6) == MSG_REGULAR) {
-                    positions.add(decodeRegular(deviceSession, buf, subtype));
+                    Position position = decodeRegular(deviceSession, buf, subtype);
+                    if (position != null) {
+                        positions.add(position);
+                    }
                 } else {
                     buf.skipBytes(length);
                 }

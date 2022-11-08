@@ -46,11 +46,11 @@ public class G1rusProtocolDecoder extends BaseProtocolDecoder {
         return buf.readCharSequence(length, StandardCharsets.US_ASCII).toString();
     }
 
-    private int getADValue(int rawValue) {
+    private double getADValue(int rawValue) {
         final int AD_MIN = -10;
         final int AD_MAX = 100;
 
-        return rawValue * (AD_MAX - AD_MIN) / 4096 + AD_MIN;
+        return rawValue * (AD_MAX - AD_MIN) / 4096.0 + AD_MIN;
     }
 
     private Position decodeRegular(DeviceSession deviceSession, ByteBuf buf, int type) {

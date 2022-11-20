@@ -65,6 +65,18 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
             .any()
             .compile();
 
+    private static final Pattern PATTERN_BATCH = new PatternBuilder()
+            .number("(dd)(dd)(dd).d+,")          // time (hhmmss)
+            .expression("([AV]),")               // validity
+            .number("(dd)(dd.d+),")              // latitude
+            .expression("([NS]),")
+            .number("(d{2,3})(dd.d+),")          // longitude
+            .expression("([EW]),")
+            .number("(d+.d+),")                  // speed
+            .number("(d+.d+),")                  // course
+            .number("(dd)(dd)(dd)")              // date (ddmmyy)
+            .compile();
+
     private Position parseSingleGPSCommand(DeviceSession deviceSession, Pattern pattern, String gpsCommand) {
         Parser parser = new Parser(pattern, gpsCommand);
         if (!parser.matches()) {
@@ -216,6 +228,35 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
             position.set(Position.KEY_BATTERY, Integer.parseInt(batteryInfo) / 100.0);
 
             return position;
+
+        } else if (uri.startsWith("/pushtrack.do")) {
+
+            /* IMPORTANT: these changes are untested!
+             * Before going to `master` branch, we should be sure that it's working!!!
+             */
+            sendResponse(channel, "PUSHTRACK.DO: OK");
+
+            String sentence = request.content().toString(StandardCharsets.US_ASCII);
+
+            String[] payloadParts = sentence.split("&");
+            String phone = payloadParts[1].substring(16);
+            DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, phone);
+            if (deviceSession == null) {
+                return null;
+            }
+
+            String[] gpsCommands = payloadParts[2].split("\r");
+            int gpsCommandsIndex = 0;
+
+            List<Position> positions = new LinkedList<>();
+            Position position;
+
+            while ((position = parseSingleGPSCommand(deviceSession, PATTERN_BATCH,
+                    gpsCommands[gpsCommandsIndex++])) != null) {
+                positions.add(position);
+            }
+
+            return positions;
 
         }
 

@@ -50,7 +50,7 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
     public static final int MSG_GPS_SENSORS = 0xF2;
     public static final int MSG_EVENTS = 0xF3;
 
-    private static final Pattern PATTERN = new PatternBuilder()
+    private static final Pattern PATTERN_SINGLE = new PatternBuilder()
             .expression("[^$]+")
             .text("$GPRMC,")
             .number("(dd)(dd)(dd).d+,")          // time (hhmmss)
@@ -64,6 +64,30 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
             .number("(dd)(dd)(dd),")             // date (ddmmyy)
             .any()
             .compile();
+
+    private Position parseSingleGPSCommand(DeviceSession deviceSession, Pattern pattern, String gpsCommand) {
+        Parser parser = new Parser(pattern, gpsCommand);
+        if (!parser.matches()) {
+            return null;
+        }
+
+        Position position = new Position(getProtocolName());
+        position.setDeviceId(deviceSession.getDeviceId());
+
+        DateBuilder dateBuilder = new DateBuilder()
+                .setTime(parser.nextInt(), parser.nextInt(), parser.nextInt());
+
+        position.setValid(parser.next().equals("A"));
+        position.setLatitude(parser.nextCoordinate());
+        position.setLongitude(parser.nextCoordinate());
+        position.setSpeed(parser.nextDouble());
+        position.setCourse(parser.nextDouble());
+
+        dateBuilder.setDateReverse(parser.nextInt(), parser.nextInt(), parser.nextInt());
+        position.setTime(dateBuilder.getDate());
+
+        return position;
+    }
 
     @Override
     protected Object decode(
@@ -175,32 +199,21 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
 
             String sentence = request.content().toString(StandardCharsets.US_ASCII);
 
-            String[] parts = sentence.split("&");
-            String phone = parts[1].substring(16);
+            String[] payloadParts = sentence.split("&");
+            String phone = payloadParts[1].substring(16);
             DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, phone);
             if (deviceSession == null) {
                 return null;
             }
 
-            Parser parser = new Parser(PATTERN, parts[2]);
-            if (!parser.matches()) {
+            Position position = parseSingleGPSCommand(deviceSession, PATTERN_SINGLE, payloadParts[2]);
+            if (position == null) {
                 return null;
             }
 
-            Position position = new Position(getProtocolName());
-            position.setDeviceId(deviceSession.getDeviceId());
-
-            DateBuilder dateBuilder = new DateBuilder()
-                    .setTime(parser.nextInt(), parser.nextInt(), parser.nextInt());
-
-            position.setValid(parser.next().equals("A"));
-            position.setLatitude(parser.nextCoordinate());
-            position.setLongitude(parser.nextCoordinate());
-            position.setSpeed(parser.nextDouble());
-            position.setCourse(parser.nextDouble());
-
-            dateBuilder.setDateReverse(parser.nextInt(), parser.nextInt(), parser.nextInt());
-            position.setTime(dateBuilder.getDate());
+            String[] messageParts = payloadParts[2].split(";");
+            String batteryInfo = messageParts[messageParts.length - 1].substring(7).substring(0, 3);
+            position.set(Position.KEY_BATTERY, Integer.parseInt(batteryInfo) / 100.0);
 
             return position;
 

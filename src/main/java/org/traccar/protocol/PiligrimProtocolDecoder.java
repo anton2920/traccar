@@ -111,6 +111,7 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
         position.setTime(dateBuilder.getDate());
 
         return position;
+
     }
 
     @Override
@@ -243,9 +244,6 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
 
         } else if (uri.startsWith("/pushtrack.do")) {
 
-            /* IMPORTANT: these changes are untested!
-             * Before going to `master` branch, we should be sure that it's working!!!
-             */
             sendResponse(channel, "PUSHTRACK.DO: OK");
 
             String sentence = request.content().toString(StandardCharsets.US_ASCII);
@@ -279,6 +277,7 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
         }
 
         return null;
+
     }
 
 }

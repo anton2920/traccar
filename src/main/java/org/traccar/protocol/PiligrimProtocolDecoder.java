@@ -90,8 +90,20 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
                 .setTime(parser.nextInt(), parser.nextInt(), parser.nextInt());
 
         position.setValid(parser.next().equals("A"));
-        position.setLatitude(parser.nextCoordinate());
-        position.setLongitude(parser.nextCoordinate());
+
+        /* NOTE: zero coordinates must be removed */
+        double coordinate = parser.nextCoordinate();
+        if (coordinate - 0.0 <= 1e-9) {
+            return null;
+        }
+        position.setLatitude(coordinate);
+
+        coordinate = parser.nextCoordinate();
+        if (coordinate - 0.0 <= 1e-9) {
+            return null;
+        }
+        position.setLongitude(coordinate);
+
         position.setSpeed(parser.nextDouble());
         position.setCourse(parser.nextDouble());
 

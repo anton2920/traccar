@@ -65,7 +65,7 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
             .any()
             .compile();
 
-    private static final Pattern PATTERN_BATCH = new PatternBuilder()
+    private static final Pattern PATTERN_TRACK = new PatternBuilder()
             .number("(dd)(dd)(dd),")          // time (hhmmss)
             .expression("([AV]),")               // validity
             .number("(dd)(dd.d+),")              // latitude
@@ -266,7 +266,7 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
             Position position;
 
             for (int gpsCommandsIndex = 0; gpsCommandsIndex < gpsCommands.length; ++gpsCommandsIndex) {
-                position = parseSingleGPSCommand(deviceSession, PATTERN_BATCH, gpsCommands[gpsCommandsIndex++]);
+                position = parseSingleGPSCommand(deviceSession, PATTERN_TRACK, gpsCommands[gpsCommandsIndex++]);
                 if (position != null) {
                     positions.add(position);
                 }

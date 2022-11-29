@@ -220,7 +220,7 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
 
         } else if (uri.startsWith("/push.do")) {
 
-            sendResponse(channel, "PUSH.DO: OK");
+            sendResponse(channel, "success");
 
             String sentence = request.content().toString(StandardCharsets.US_ASCII);
 
@@ -244,7 +244,7 @@ public class PiligrimProtocolDecoder extends BaseHttpProtocolDecoder {
 
         } else if (uri.startsWith("/pushtrack.do")) {
 
-            sendResponse(channel, "PUSHTRACK.DO: OK");
+            sendResponse(channel, "success");
 
             String sentence = request.content().toString(StandardCharsets.US_ASCII);
 
